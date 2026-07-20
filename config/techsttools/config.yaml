@@ -1,0 +1,320 @@
+#Bearer token for the techst /api/addapp endpoint. The staff/operator /addapp
+#and /adddlc commands require it - without one they log and abort. Provision via the
+#techstmanifest.com operator.
+TechstApiKey: ""
+TechstApiBase: ""
+ApiKey: ""
+AutoUpdate: no
+TechstTicketFetch: no
+TechstTicketSpoof: no
+TechstLuaDir: "config\\techstation-lua"
+Notifications: no
+NotifyInit: no
+CloudSave.Enabled: yes
+
+#Disables Steam Family Sharing's license lock, both for you (so you can
+#play a shared library title while the lender is in-game) and for others
+#borrowing from you. Wire-pushed: takes effect the moment you save.
+DisableFamilyShareLock: yes
+
+#Ownership-filter mode. no (default) = the AppIds list below is a BLACKLIST
+#(everything is owned EXCEPT those ids). yes = the list is a WHITELIST
+#(nothing is owned EXCEPT those ids). Most users leave this no.
+UseWhitelist: no
+
+#Auto-classify what CheckAppOwnership reports as owned: keep only Games and
+#Applications, drop everything else (demos, videos, tools, betas, etc.).
+#DLC ownership checks are unaffected. Overrides the AppIds black/whitelist,
+#but AdditionalApps still wins over this.
+AutoFilterList: yes
+
+#The black/whitelist of AppIds for the ownership filter. Interpreted as a
+#blacklist by default, or a whitelist when UseWhitelist is yes (see above).
+#One "- <AppId>" per line. Empty = no manual include/exclude.
+AppIds:
+
+#Allow launching games you don't own. Still respects the AppIds
+#black/whitelist, so a blacklisted id stays unplayable. no = only owned
+#(or AdditionalApps-injected) games launch.
+PlayNotOwnedGames: no
+
+#Inject ownership of these AppIds - the core "add a game to my library"
+#list. Steam treats each id as owned (CheckAppOwnership + a synthetic
+#license). For games you don't own at all, the normal path is a techst-lua
+#<appid>.lua plugin; the /addapp URI command (staff/operator only) also lands
+#entries in config.auto.yaml. Add ids here by hand only if you know them.
+AdditionalApps:
+
+#DepotIds to inject alongside AdditionalApps so Steam can actually DOWNLOAD
+#the added games' content. Usually added automatically (by a lua plugin, or the
+#staff/operator /addapp command); hand-edit only when a game needs a depot the
+#auto path didn't add.
+AdditionalDepots:
+
+#Store package (sub) IDs to inject as owned licenses. Only works for real
+#Steam store packages, not arbitrary numbers. Most users leave this empty
+#and rely on AdditionalApps instead.
+AdditionalPackages:
+
+#AppIds whose preload / release-date gate to flip to RELEASED, so a game
+#that's finished downloading during its preload window launches before the
+#official release time. URI commands /unlockpreload/<id> and
+#/removeunlockpreload/<id> manage this list dynamically (changes land in
+#config.auto.yaml).
+UnlockPreload:
+
+#AppIds to KEEP auto-updating even when TechStation would otherwise freeze
+#their version (added games default to updates-off so a pinned manifest stays
+#put). List a game here to let Steam patch it normally.
+KeepUpdates:
+
+#Per-app DLC ownership overrides: declare DLC AppIds (and display names) to
+#report as owned for a parent game. Map shape <ParentAppId>: { <DlcAppId>:
+#"<Name>", ... } - see the DlcData example near the top. Empty = rely on
+#the automatic DLC-unlock hook instead.
+DlcData:
+
+#Per-app access tokens (PICS product-info tokens) used to fetch ProductInfo
+#from Steam for games that require one. Map of <AppId>: <uint64 token>.
+#Usually unnecessary - the techst JIT path supplies tokens on demand; set
+#here only for a specific game that needs a known token. See also
+#AppTokensFile below for loading these from an external JSON file.
+AppTokens:
+
+#AppIds for which Steam should be reported as OFFLINE to the game (the
+#SteamApps "is offline" / connectivity answer is forced). Useful for games
+#that behave better, or skip online checks, when they think Steam is
+#offline. One "- <AppId>" per line.
+FakeOffline:
+
+#Remap a game's AppId for NETWORKING purposes - the game still launches as
+#itself, but matchmaking/lobby/P2P traffic uses the fake id, letting players
+#on different real apps see each other. Map of <RealAppId>: <FakeAppId>.
+#A wildcard key 0 redirects every otherwise-unowned game to one fake id.
+FakeAppIds:
+
+#Legacy-style AppId replacement: swaps the real AppId ENTIRELY for that
+#game (not just networking, unlike FakeAppIds above). Heavier-handed; use
+#only for old games that need their whole identity replaced. One
+#"- <AppId>" per line.
+LegacyFakeAppIds:
+
+#Rich-presence shown when NO game is running (you're idle). Friends see you
+#"playing" this AppId with Title as the status text; it's injected with you as
+#the owner, so it shows as one of YOUR OWNED titles. Point it at a game you own.
+#AppId 0 disables. Wire-pushed: saving re-broadcasts presence within a second.
+IdleStatus:
+  AppId: 0
+  Title: ""
+
+#Rich-presence shown while you're in a game you DON'T own (a spoofed / added
+#title); games you actually own keep their real status. Like IdleStatus, this
+#AppId is stamped as one of YOUR OWNED titles. AppId 0 disables. Wire-pushed.
+UnownedStatus:
+  AppId: 0
+  Title: ""
+
+#Override the display name Steam shows for a game. Map of <AppId>: "Name".
+#Wire-pushed (presence re-emits on save). Empty = use Steam's real titles.
+GameTitles:
+
+#Threshold (in days) for techstation://refreshachievements (no-arg sweep).
+#Achievement schemas cached under appcache/stats older than this many days
+#are deleted + re-fetched. 30 is a safe default; set to 0 to disable the
+#sweep.
+AchievementsMaxAgeDays: 30
+
+#Per-depot CD-key overrides for the legacy proof-of-purchase flow.
+#Map of <depot_id>: "XXXX-XXXX-XXXX-XXXX". Depots not listed here get a
+#deterministic 19-char synthetic key seeded by depot+account; override
+#only when you know the canonical key (e.g. GTA V's depot 362003 wants
+#"UQ33-X9BH-C4P2-VG2S"). Use /dumplegacycdkey/<depot> to peek the
+#current resolved value.
+LegacyCDKeys:
+
+#Override the purchase/subscription timestamp for an AppId (controls the
+#"owned since" date Steam reports). Map of <AppId>: <unix-epoch-seconds>.
+#Overlaid with TechStation's own auto entries; your value wins on conflict.
+SubscriptionTimestamps:
+
+#Per-app playtime overrides (appid -> minutes). Misc::recvMsg intercepts
+#the inbound CPlayer_*_Response messages and rewrites the per-game
+#playtime_forever before Steam's downstream code updates the in-memory
+#cache. Local-only - outbound traffic is not touched, so the CM-side stored
+#playtime keeps its real value. URI commands /settime/<id>/<min>,
+#/addtime/<id>/<min>, /cleartime/<id>, and /dumptime/<id> manage this
+#dynamically (changes land in config.auto.yaml).
+PlaytimeOverrides:
+
+#Account-scoped unlock guard. Maps an owner SteamID (uint32 account id) to
+#the AppIds that ONLY that account may unlock - so a shared config doesn't
+#unlock those games on the wrong account. See the DenuvoGames example near
+#the top. Empty = no per-account restriction.
+DenuvoGames:
+
+#Per-account kill-switch. List uint32 SteamID account IDs (the low 32 bits
+#of a SteamID64 - same shape as the keys under DenuvoGames). When any
+#listed account logs in, TechStation flips fully inert for that session:
+#every overlay (AdditionalApps, FakeAppIds, DlcData, ManifestPin, depot
+#keys, FakeOffline/Wallet/Email, achievement spoofs, ticket cache
+#substitution, etc.) is suppressed and Steam behaves as if the DLL isn't
+#loaded. Library apps spoofed in by lua plugins / config get a synthetic
+#OnLicenseRevokedForApp broadcast at gate-flip so the UI clears
+#immediately rather than waiting for a natural refresh. Reload-safe:
+#editing this list while Steam is running re-evaluates on the next
+#GetSteamID resolve (i.e. effectively next login / account switch).
+#Example:
+#BlockedSteamIds:
+#  - 12345678
+#  - 87654321
+BlockedSteamIds:
+
+#Appids where TechstSteamStub.dll injection MUST be skipped. Leave empty
+#to inject the plugin into every overlay app (safe default - TechstSteamStub
+#self-detects .bind and sits idle on non-SteamStub exes). Add an appid
+#here if the plugin collides with Steam's native unpacker or crashes the
+#game. NOTE: post-rename, the static unpacker (unpacker/) is the primary
+#path; this blacklist only affects the in-process fallback plugin. Key
+#kept as `SteamStubBlacklist` for back-compat with existing config.yaml
+#files. Example:
+#SteamStubBlacklist:
+#  - 1364780
+SteamStubBlacklist:
+
+#Appids excluded from TechstSpoof (the appid-7 ownership-ticket spoof, see
+#TechstTicketSpoof). Add an appid here if its stub rejects the spoofed ticket: it
+#falls back to the SteamStub .bind patcher. Add it here AND to SteamStubBlacklist
+#to fall back further to a fetched API ticket. Empty (default) = spoof every
+#eligible overlay app. Example:
+#TicketSpoofBlacklist:
+#  - 219950
+TicketSpoofBlacklist:
+
+#---- DLC auto-unlock (which running games get DLC ownership synthesised) ----
+#
+#Mode: which of the two lists below is ACTIVE.
+#  yes (default) = whitelist mode. Only DlcAutoUnlockWhitelist is
+#      consulted; DlcAutoUnlockBlacklist is dormant.
+#  no          = blacklist mode. Only DlcAutoUnlockBlacklist is
+#      consulted; DlcAutoUnlockWhitelist is dormant.
+DlcAutoUnlockUseWhitelist: yes
+
+#Opt-IN list. Active when DlcAutoUnlockUseWhitelist is yes. Auto-unlock
+#DLC ONLY while a parent game listed here is running. Every other
+#running game gets Steam's real answer — DLC ownership is never
+#synthesised unless the parent is on this list. Also means Rust-style
+#DLC-enumeration crashes can't fire by default (they need the parent
+#whitelisted first). Empty = no auto-unlock for anyone.
+#Ignored while DlcAutoUnlockUseWhitelist is no.
+DlcAutoUnlockWhitelist:
+
+#Opt-OUT list. Active when DlcAutoUnlockUseWhitelist is no. Auto-unlock
+#fires for every running game EXCEPT parents listed here (crash escape
+#hatch for games like Rust that enumerate hundreds of DLC ids and crash
+#when the hook lies about owning them). Ignored while
+#DlcAutoUnlockUseWhitelist is yes (the default).
+DlcAutoUnlockBlacklist:
+
+#Safety gate: if yes, TechStation disables itself at boot when
+#steamclient64.dll's hash doesn't match a known-good value (i.e. after a
+#Steam client update TechStation hasn't been verified against). Protects
+#against running stale offsets on an unknown build. Checked once at init -
+#restart required to re-evaluate. Default no.
+SafeMode: no
+
+#Paired with SafeMode: when yes, log a warning if steamclient64.dll's hash
+#differs from the known-good value (without necessarily disabling - that's
+#SafeMode's job). Init-only; restart required. Default no.
+WarnHashMissmatch: no
+
+#When yes (default), only Warn-level (error) events raise a Windows toast.
+#Informational notify()/notifyLong() messages (init-complete, save
+#confirmations, etc.) still go to the log but don't pop a toast. Set to no to
+#also surface those informational toasts. Master on/off is Notifications above.
+ToastsErrorOnly: yes
+
+#Spoof your account's e-mail address client-side (what Steam's UI shows;
+#does not change the real backend e-mail). Leave blank to disable.
+FakeEmail: ""
+
+#Spoof your Steam Wallet balance client-side, in your wallet's minor units
+#(e.g. cents). 0 = off. NOTE (restart-required + caveats): the spoof rides
+#an inbound wallet-update message that CM skips for $0/idle wallets, and
+#SteamUI's React read path bypasses our hook, so set this BEFORE launching
+#Steam and don't expect a mid-session change to repaint the widget.
+FakeWalletBalance: 0
+
+#Path to an external JSON object { "<depot_id>": "<64-char hex depot key>" }.
+#Loaded alongside this config and watched for changes. Satisfies
+#CMsgClientGetDepotDecryptionKey responses that would otherwise return
+#AccessDenied. Leave blank to disable (the techst JIT path covers the gap
+#when this is empty). The PATH is locked at init (restart to change it);
+#the file's CONTENTS still hot-reload.
+DepotKeysFile: ''
+
+#Path to an external JSON object { "<app_id>": "<uint64 access token as
+#string>" }. Entries here merge on top of the AppTokens block above. Leave
+#blank to disable (the techst JIT path covers the gap). Same path-locked-at-
+#init / contents-hot-reload behaviour as DepotKeysFile.
+AppTokensFile: ''
+
+#Steam Web API key. Optional fallback used to fetch achievement schemas when
+#TechstManifest can't supply one (see AchievementsLanguage / refreshachievements).
+#Blank = rely on TechstManifest only. Get a key at https://steamcommunity.com/dev/apikey
+SteamAPIKey: ""
+
+#Embedded HTTP API for remote control / sync. Default off (opt-in).
+#Token auto-generated at <steam>/config/techstation/cache/remote_api_token.txt
+#on first start when RemoteApi.Token is blank. See docs/REMOTE_API.md.
+#All RemoteApi.* keys bind once at boot - restart required to change them.
+RemoteApi.Enabled: no
+
+#TCP listen port for the embedded API.
+RemoteApi.Port: 8765
+
+#Interface to bind. "" or "0.0.0.0" = all interfaces (LAN-reachable).
+#Set to "127.0.0.1" to lock to localhost only.
+RemoteApi.BindAddress: "0.0.0.0"
+
+#Shared bearer token for /api/* endpoints. Leave blank to auto-generate
+#a 32-char random hex on first start; the value is persisted to the
+#cache file above. Set explicitly here only if you want a stable token
+#(e.g. for shared dotfiles).
+RemoteApi.Token: ""
+
+#Wrap accepted connections in TLS using a self-signed cert generated on
+#first run + persisted to <steam>/config/techstation/cache/techstation_cert.pem
+#and the user's Windows MY cert store. Default-on because browsers
+#enforce CSP `upgrade-insecure-requests` on subresource fetches from
+#any HTTPS origin (e.g. store.steampowered.com), so a content-script
+#extension fetching a plain-HTTP LAN endpoint silently fails. With TLS
+#on, clients use https://<host>:8765 and pin the cert fingerprint
+#exposed via /api/status.certSha256. Flip to no for legacy plain HTTP.
+RemoteApi.Tls: yes
+
+#Language for the achievement schema fetched via the Web API.
+#One language per call; the on-disk binary KV holds only that language.
+#Legal values match Steam's localization tokens (english, french, german,
+#italian, spanish, russian, etc.).
+AchievementsLanguage: english
+
+#Log verbosity. Only messages at or above this level are written:
+#Once = 0   (de-duplicated one-time notices)
+#Debug = 1  (very chatty; for diagnosis)
+#Info = 2   (default - normal operational detail)
+#NotifyShort = 3
+#NotifyLong = 4
+#Warn = 5   (errors/warnings only)
+#None = 6   (silence the log entirely)
+LogLevel: 2
+
+#When yes (default), each Steam start writes to a fresh
+#log_YYYYMMDD-HHMMSS.log so each session has its own file - easier to
+#hand to support, no cross-session interleaving. Set to no for the
+#rolling TechStation.log (single file, append-only) if you prefer a
+#cross-session diff workflow. Locked at log open (restart required).
+LogTimestamped: yes
+
+#Logs EVERY Steamworks IPC call (this makes the logfile huge!). Leave no
+#unless you're diagnosing a specific call path.
+ExtendedLogging: no
