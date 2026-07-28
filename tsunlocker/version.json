@@ -1,8 +1,8 @@
 {
-  "version": "1.0.8",
+  "version": "1.0.9",
   "files": {
-    "tsunlocker.dll": "082d59986bff01855e81bfac625cb628f446d59456fd248a902f9a16d75d3558",
-    "dwmapi.dll": "96ceeabd5e35ba90825c2368e566d5dde084484af5ecbdcff0b61294362a5fb2",
-    "xinput1_4.dll": "d5c357b401aad781e569d6f45431c7aafc96f92495703a33c2a07471f87f7f87"
+    "tsunlocker.dll": "4da758d5bc1302c33d89a1bcd595ca30eb2a4ed183938bd6047a604ed48b37d9",
+    "dwmapi.dll": "f7fa0c6aa762183512fb9fdc7b62487d1a0cbf2c1d192670f8439faa4529fe94",
+    "xinput1_4.dll": "40fb4f66d8ce575ff52fc5ee14eff1e391514b154e32801f3a6e83b6b63a05e8"
   }
 }
